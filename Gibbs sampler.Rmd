@@ -1,0 +1,100 @@
+
+n <-100
+set.seed(2)
+y_1 <- c(134,146, 104, 119, 124, 161, 107, 83, 113, 129, 97, 123)
+y_2 <- c(70, 118, 101, 85, 107, 132, 94)
+sum(y_1)
+#------------------------------------------
+NN <- 10000
+
+thetas_1<- c()
+thetas_2<- c()
+taus_1<- c()
+taus_2<- c()
+thetas_t<- c()
+#hyperparameters
+
+theta_10<-110
+theta_20<-110
+tau_10<-1/100
+tau_20<-1/100
+aplha_1<-0.01
+aplha_2<-0.01
+beta_1<-4
+beta_2<-4
+n_1=12
+n_2=7
+
+# start, initial values
+theta_1 <- 0.5
+theta_2 <- 0.5
+tau_1 <- 0.5
+tau_2 <- 0.5
+
+for (i in 1 : NN){
+  #  newmu <- rnorm(1, (tau * sumdata+tau0*mu0)/(tau0+n*tau), sqrt(1/(tau0+n*tau)) )
+  #rat <- b + 1/2 * sum ( (y - newmu)^2)
+  #rexp(n, rate = 1)  
+  #newtau <- rexp(1,shape=a + n/2, rate=rat)
+  sum_y_1<-sum(y_1)
+  sum_y_2<-sum(y_2)
+  newtheta_1<-rnorm(1, (tau_1 * sum_y_1+tau_10*theta_10)/(tau_1+tau_10),1/(tau_1+tau_10))
+  newtheta_2<-rnorm(1, (tau_2 * sum_y_2+tau_20*theta_20)/(tau_2+tau_20),1/(tau_2+tau_20))
+  newtau_1<-rgamma(1,aplha_1+n_1/2-1, 1/2 * (sum_y_1-theta_1)^2+beta_1)
+  newtau_2<-rgamma(1,aplha_2+n_2/2-1, 1/2 * (sum_y_2-theta_2)^2+beta_2)
+  
+  
+  thetas_1 <- c(thetas_1, newtheta_1)
+  thetas_2 <- c(thetas_2, newtheta_2)
+  taus_1 <- c(taus_1, newtau_1)
+  taus_2 <- c(taus_2, newtau_2)
+  thetas_t<-c(thetas_t, theta_1-theta_2)
+  theta_1 <- newtheta_1
+  theta_2 <- newtheta_2
+  tau_1<- newtau_1
+  tau_2<- newtau_2
+  
+}
+burn <- 200
+thetas_1 <- thetas_1[burn:NN]
+thetas_2 <- thetas_2[burn:NN]
+taus_1 <- taus_1[burn:NN]
+taus_2 <- taus_2[burn:NN]
+thetas_t<-thetas_t[burn:NN]
+
+mean(thetas_1)
+var (thetas_1)
+mean(thetas_2)
+var (thetas_2)
+
+mean(taus_1)
+var (taus_1)
+mean(taus_2)
+var (taus_2)
+
+mean(thetas_t)
+var (thetas_t)
+
+par(mfrow=c(1,2))
+hist(thetas_1, main = bquote(bold("Posterior of ")~theta[1]), xlab = bquote(theta[1]), 60)
+hist(taus_1,main = bquote(bold("Posterior of ")~tau[1]), xlab = bquote(tau[1]), 60)
+
+hist(thetas_2, main = bquote(bold("Posterior of ")~theta[2]), xlab = bquote(theta[2]),60)
+hist(taus_2,main = bquote(bold("Posterior of ")~tau[2]), xlab = bquote(tau[2]), 60)
+
+hist(thetas_t,main = bquote(bold("Posterior of the difference in means,")~theta[1]-theta[2]), xlab = bquote(theta[1]-theta[2]),  40)
+abline(v = mean(y_1)-mean(y_2), col = 2, lwd = 2)
+
+
+#cat("thetas_1 95% credible set: ", 
+#    round(mean(thetas_1) -1.96*sqrt(var (thetas_1)),4), "-", round(mean(thetas_1) + 1.96*sqrt(var (thetas_1)),4),"\n")
+#cat("thetas_2 95% credible set: ", 
+#    round(mean(thetas_2) -1.96*sqrt(var (thetas_2)),4), "-", round(mean(thetas_2) + 1.96*sqrt(var (thetas_2)),4),"\n")
+
+#(b)	Find sample differences θ1 – θ2. Proportion of positive differences approximates posterior probability of hypothesis H0: θ1 > θ2. What is this proportion?
+#Compute the posterior probability that θ1−θ2>0 to test H0: θ1 > θ2
+mean(thetas_t > 0)
+
+
+cat("thetas_2 95% credible set: ", 
+    round(mean(thetas_t) -1.96*sqrt(var (thetas_t)),4), "-", round(mean(thetas_t) + 1.96*sqrt(var (thetas_t)),4),"\n")    
